@@ -3,51 +3,6 @@ const client = new Discord.Client();
 const config = require('./config.json');
 const http = require('http');
 
-/*client.on('ready', () => {
-  var now = new Date();
-  var millisTill12 = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 02, 45, 30, 0) - now;
-  console.log(now);
-  if (millisTill12 < 0) {
-    millisTill12 += 86400000; // it's after 12am, try 10am tomorrow.
-  }
-  setTimeout(function() {
-    http.get('http://viu.apparmor.com/Tools/AlertHistory/', (res) => {
-    const { statusCode } = res;
-    const contentType = res.headers['content-type'];
-
-    let error;
-    if (statusCode !== 200) {
-      error = new Error('Request Failed.\n' + `Status Code: ${statusCode}`);
-    } else if (!/^text\/html/.test(contentType)) {
-      error = new Error('Invalid content-type.\n' + `Expected text/html but received ${contentType}`);
-    }
-    if (error) {
-      console.error(error.message);
-      // Consume response data to free up memory
-      res.resume();
-      return;
-    }
-
-    res.setEncoding('utf8');
-    let rawData = '';
-    res.on('data', (chunk) => { rawData += chunk; });
-    res.on('end', () => {
-      try {
-        const parsedData = JSON.parse(rawData);
-        console.log(parsedData);
-        client.channels.get('467017233307009045').send(`Date/Time:\n\`${parsedData.AlertFeedItems[0].DateTimeString}\`\n\
-Title:\n\`${parsedData.AlertFeedItems[0].Title}\`\n\
-Description:\n\`\`\`${parsedData.AlertFeedItems[0].Description}\`\`\``);
-      } catch (e) {
-        console.error(e.message);
-      }
-    });
-    }).on('error', (e) => {
-    console.error(`Got error: ${e.message}`);
-    });
-  }, millisTill12);
-});*/
-
 let prefix = config.prefix;
 client.on("message", (message) => {
   const args = message.content.slice(prefix.length).split(/ +/g);
