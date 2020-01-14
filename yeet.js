@@ -44,7 +44,7 @@ ${parsedData.AlertFeedItems[0].Description}`;
           }
           if (enmap.get('statuses').length > 3) {
             let array = enmap.get('statuses');
-            enmap.remove('statuses', array[3]);
+            enmap.remove('statuses', array[0]);
           }
         }
       } catch (e) {
@@ -59,7 +59,7 @@ ${parsedData.AlertFeedItems[0].Description}`;
 client.on('ready', () => {
   console.log('Online and running');
   getData();
-  var intv = setInterval(getData, 600000);
+  setInterval(getData, 600000);
 });
 
 let prefix = config.prefix;
@@ -101,13 +101,15 @@ ${parsedData.AlertFeedItems[0].Description}`;
               if (enmap.get('statuses').indexOf(dataMsg) == -1) {
                 enmap.push('statuses', dataMsg);
               }
-              if (enmap.get('statuses').length > 3) {
+              for (let i = 3; i < enmap.get('statuses').length; i++) {
                 let array = enmap.get('statuses');
-                enmap.remove('statuses', array[3]);
+                enmap.remove('statuses', array[0]);
               }
+              console.log(enmap.get('statuses'));
               message.channel.send(dataMsg).then(sent => {
                 const statusArray = enmap.get('statuses');
                 var currentPage = statusArray.length - 1;
+                console.log(`Statuses: ${statusArray.length}\n${statusArray}`);
                 function createCollecterMessage(msg) {
                   const filter = (reaction, user) => {
                     return reaction.emoji.name === '⬅' || reaction.emoji.name === '➡' && user.id === author;
@@ -120,6 +122,7 @@ ${parsedData.AlertFeedItems[0].Description}`;
                     } else if (reaction.emoji.name === '➡' && currentPage !== (statusArray.length - 1)) {
                       msg.edit(statusArray[currentPage++]);
                     }
+                    console.log('Page: ', currentPage);
                     reaction.remove(author);
                   });
                 }
