@@ -69,7 +69,9 @@ function getChannels() {
 getChannels();
 function updateLatestAlert()
 {
-  if(alerts[0] != newestAlert)  {
+  if (newestAlert === undefined)
+    newesetAlert.DateTimeString = '0';
+  if(alerts[0].DateTimeString != newestAlert.DateTimeString)  {
     newestAlert = alerts[0];
     autoChannels.forEach(channel => {
       client.channels.get(channel).send(alertToString(newestAlert));
