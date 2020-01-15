@@ -3,6 +3,7 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const config = require('./config.json');
 const http = require('http');
+const fs = require('fs');
 
 //site
 const gateway = 'http://viu.apparmor.com/Tools/AlertHistory/';
@@ -54,13 +55,25 @@ function alertToString(a)
 ${a.Description}`;
 }
 
-var autoChannels = []
+var autoChannels = [];
+
+function getChannels() {
+  fs.readFile('Discord_Bots/VIU_Status_Bot/channels.txt', 'utf8', (err, data) => {
+    if (err)
+      return console.log(err);
+
+    autoChannels = data.slice(0, -2).split(', ');
+  });
+}
+
+getChannels();
 function updateLatestAlert()
 {
   if(alerts[0] != newestAlert)  {
     newestAlert = alerts[0];
-    for(let i = 0 ; i < autoChannels; i++)
-      autoChannels.send(alertToString(newestAlert));
+    autoChannels.forEach(channel => {
+      client.channels.get(channel).send(alertToString(newestAlert));
+    });
   }
 }
 function autoAnnouncement()
@@ -128,12 +141,16 @@ client.on("message", (message) => {
 
         });
       break;
+
       case 'subscribe':
         if(!message.member.hasPermission("ADMINISTRATOR")) {
           message.channel.send("You don't have permissions to subscribe to a channel!");
           return;
         }
         try {
+          if (args.join(" ") === '') {
+            return message.channel.send("Enter a channel name to subscribe");
+          }
           var channel = client.channels.find('name', args[0]);
           if (!channel) {
             return message.channel.send("Could not find channel: " + args[0]);
@@ -141,18 +158,28 @@ client.on("message", (message) => {
             return message.channel.send("Already subscribed to channel: " + args[0]);
           }
           autoChannels.push(channel.id);
+
+          var file = fs.createWriteStream('Discord_Bots/VIU_Status_Bot/channels.txt');
+          file.on('error', function(err) { console.log(err); });
+          autoChannels.forEach(value => file.write(value + ', '));
+          file.end();
+
           message.channel.send("Subscribed to " + args[0]);
         }
         catch (e) {
           console.error(e);
         }
       break;
+
       case 'unsubscribe':
           if(!message.member.hasPermission("ADMINISTRATOR")) {
             message.channel.send("You don't have permissions to unsubscribe from a channel!");
             return;
           }
           try {
+            if (args.join(" ") === '') {
+              return message.channel.send("Enter a channel name to unsubscribe");
+            }
             var channel = client.channels.find('name', args[0]);
             if (!channel) {
               return message.channel.send("Could not find channel: " + args[0]);
@@ -160,6 +187,12 @@ client.on("message", (message) => {
               return message.channel.send("Not subscribed to channel: " + args[0]);
             }
             autoChannels.remove(channel.id);
+
+            var file = fs.createWriteStream('Discord_Bots/VIU_Status_Bot/channels.txt');
+            file.on('error', function(err) { console.log(err); });
+            autoChannels.forEach(value => file.write(value + ', '));
+            file.end();
+
             message.channel.send("Unsubscribed from " + args[0]);
           }
           catch (e) {
