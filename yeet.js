@@ -69,9 +69,7 @@ function getChannels() {
 getChannels();
 function updateLatestAlert()
 {
-  if (newestAlert === undefined)
-    newesetAlert.DateTimeString = '0';
-  if(alerts[0].DateTimeString != newestAlert.DateTimeString)  {
+  if(newestAlert === undefined || alerts[0].Description != newestAlert.Description)  {
     newestAlert = alerts[0];
     autoChannels.forEach(channel => {
       client.channels.get(channel).send(alertToString(newestAlert));
@@ -88,7 +86,7 @@ var globalTimer;
 client.on('ready', () => {
   console.log('Online and running');
   getData();
-  globalTimer = setInterval(autoAnnouncement, 600000);
+  globalTimer = setInterval(autoAnnouncement, 60000);
 });
 
 //code stolen from https://stackoverflow.com/questions/3954438/how-to-remove-item-from-array-by-value
@@ -113,7 +111,8 @@ client.on("message", (message) => {
     switch (command) {
       case 'alert':
         message.channel.send(alertToString(newestAlert)).then(sent => {
-
+          if (alerts.length == 0)
+            return message.channel.send("No alerts to display");
           const reacts = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
           var currentPage = 0;
           let max = alerts.length - 1;
@@ -138,15 +137,17 @@ client.on("message", (message) => {
               });
           }
 
-          addButtons();
+          if (max > 0) {
+            addButtons();
+          }
           createCollecterMessage(sent);
 
         });
       break;
 
       case 'subscribe':
-        if(!message.member.hasPermission("ADMINISTRATOR")) {
-          message.channel.send("You don't have permissions to subscribe to a channel!");
+        if(!message.member.hasPermission("MANAGE_CHANNELS")) {
+          message.channel.send("You must have Manage Channels permissions to subscribe to a channel!");
           return;
         }
         try {
@@ -155,9 +156,9 @@ client.on("message", (message) => {
           }
           var channel = client.channels.find('name', args[0]);
           if (!channel) {
-            return message.channel.send("Could not find channel: " + args[0]);
+            return message.channel.send(`Could not find channel: #${args[0]}`);
           } else if (autoChannels.indexOf(channel.id) !== -1) {
-            return message.channel.send("Already subscribed to channel: " + args[0]);
+            return message.channel.send(`Already subscribed to channel: #${args[0]}`);
           }
           autoChannels.push(channel.id);
 
@@ -166,7 +167,7 @@ client.on("message", (message) => {
           autoChannels.forEach(value => file.write(value + ', '));
           file.end();
 
-          message.channel.send("Subscribed to " + args[0]);
+          message.channel.send(`Subscribed to ${channel.toString()}`);
         }
         catch (e) {
           console.error(e);
@@ -175,7 +176,7 @@ client.on("message", (message) => {
 
       case 'unsubscribe':
           if(!message.member.hasPermission("ADMINISTRATOR")) {
-            message.channel.send("You don't have permissions to unsubscribe from a channel!");
+            message.channel.send("You must have Manage Channels permissions to unsubscribe from a channel!");
             return;
           }
           try {
@@ -184,9 +185,9 @@ client.on("message", (message) => {
             }
             var channel = client.channels.find('name', args[0]);
             if (!channel) {
-              return message.channel.send("Could not find channel: " + args[0]);
+              return message.channel.send(`Could not find channel: #${args[0]}`);
             } else if (autoChannels.indexOf(channel.id) === -1) {
-              return message.channel.send("Not subscribed to channel: " + args[0]);
+              return message.channel.send(`Not subscribed to channel: #${args[0]}`);
             }
             autoChannels.remove(channel.id);
 
@@ -195,7 +196,7 @@ client.on("message", (message) => {
             autoChannels.forEach(value => file.write(value + ', '));
             file.end();
 
-            message.channel.send("Unsubscribed from " + args[0]);
+            message.channel.send(`Unsubscribed from ${channel.toString()}`);
           }
           catch (e) {
             console.error(e);
