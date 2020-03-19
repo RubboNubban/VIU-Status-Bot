@@ -5,6 +5,15 @@ const config = require('./config.json');
 const http = require('http');
 const fs = require('fs');
 
+const prefix = config.prefix;
+const helpEmbed = new Discord.RichEmbed()
+.setColor(0x338cb5)
+.addField(`${prefix}help`, "Sends this message", true)
+.addField(`${prefix}alert`, "Displays current alerts from the VIU Safety App", true)
+.addBlankField()
+.addField(`${prefix}subscribe <channel-name>`, "Subscribes a channel to get auto-updates when new alerts are posted", true)
+.addField(`${prefix}unsubscribe <channel-name>`, "Unsubscribes a channel from getting auto-updates when new alerts are posted", true);
+
 //site
 const gateway = 'http://viu.apparmor.com/Tools/AlertHistory/';
 
@@ -50,9 +59,14 @@ function getData() {
 //Converts an alert into a string that's ready to send in discord
 function alertToString(a)
 {
+  var description = a.Description;
+  if (description.length > 2000) {
+    description = description.substring(0, 1980 - a.DateTimeString.length - a.Title.length);
+    description += "...";
+  }
   return `**${a.DateTimeString}**\n\
 **${a.Title}**\n\n\
-${a.Description}`;
+${description}`;
 }
 
 var autoChannels = [];
@@ -101,7 +115,7 @@ Array.prototype.remove = function() {
   return this;
 };
 
-let prefix = config.prefix;
+
 client.on("message", (message) => {
   const args = message.content.slice(prefix.length).split(/ +/g);
   const command = args.shift().toLowerCase();
@@ -109,6 +123,10 @@ client.on("message", (message) => {
   // Exit and stop if the prefix is not there or if user is a bot
   if (!message.content.startsWith(prefix) || message.author.bot) return;
     switch (command) {
+      case 'help':
+        message.channel.send(helpEmbed);
+        break;
+
       case 'alert':
         message.channel.send(alertToString(newestAlert)).then(sent => {
           if (alerts.length == 0)
