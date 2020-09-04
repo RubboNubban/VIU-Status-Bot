@@ -193,7 +193,7 @@ client.on("message", (message) => {
       break;
 
       case 'unsubscribe':
-          if(!message.member.hasPermission("ADMINISTRATOR")) {
+          if(!message.member.hasPermission("MANAGE_CHANNELS")) {
             message.channel.send("You must have Manage Channels permissions to unsubscribe from a channel!");
             return;
           }
