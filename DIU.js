@@ -56,23 +56,48 @@ function getData() {
   });
 };
 
-//Converts an alert into a string that's ready to send in discord
-function alertToString(a)
+//save last alert to to a file
+function saveLastMessage(a)
+{
+  var aString = JSON.stringify(a);
+  fs.writeFileSync('lastMessage.json', aString, 'utf8', function (err) {
+    if (err) console.log(err);
+  });
+};
+
+//compare last saved alert with alert to be sent
+function compareLastMessage(a)
+{
+  //code stolen from https://stackoverflow.com/questions/36856232/write-add-data-in-json-file-using-node-js
+  fs.readFileSync('lastMessage.json', 'utf-8', function(err, data) {
+    if (err) {
+        console.log(err);
+    } else {
+      newestAlert = JSON.parse(data); //now is an object
+    }
+    if (newestAlert.Description == a.Description && newestAlert.DateTimeString == a.DateTimeString) {
+      return false;
+    }
+    return true;
+  });
+};
+
+//Converts an alert into an embed that's ready to send in discord
+function alertToEmbed(a)
 {
   var description = a.Description;
-  if (description.length > 2000) {
-    description = description.substring(0, 1980 - a.DateTimeString.length - a.Title.length);
-    description += "...";
-  }
-  return `**${a.DateTimeString}**\n\
-**${a.Title}**\n\n\
-${description}`;
+  const embed = new Discord.RichEmbed()
+      .setTitle(a.Title)
+      .setAuthor(a.DateTimeString)
+      .setColor(a.BackgroundColor)
+      .setDescription(description.length <= 2048 ? a.Description : description.substring(0, 2028 - a.DateTimeString.length - a.Title.length));
+  return embed;
 }
 
 var autoChannels = [];
 
 function getChannels() {
-  fs.readFile('Discord_Bots/VIU_Status_Bot/channels.txt', 'utf8', (err, data) => {
+  fs.readFile('./channels.txt', 'utf8', (err, data) => {
     if (err)
       return console.log(err);
 
@@ -83,10 +108,12 @@ function getChannels() {
 getChannels();
 function updateLatestAlert()
 {
-  if(newestAlert === undefined || alerts[0].Description != newestAlert.Description)  {
-    newestAlert = alerts[0];
+  if(newestAlert === undefined || compareLastMessage(newestAlert))  {
     autoChannels.forEach(channel => {
-      client.channels.get(channel).send(alertToString(newestAlert));
+      //client.channels.get(channel).send(alertToEmbed(newestAlert));
+      newestAlert = alerts[0];
+      console.log("Alert");
+      saveLastMessage(newestAlert);
     });
   }
 }
@@ -128,7 +155,7 @@ client.on("message", (message) => {
         break;
 
       case 'alert':
-        message.channel.send(alertToString(newestAlert)).then(sent => {
+        message.channel.send(alertToEmbed(newestAlert)).then(sent => {
           if (alerts.length == 0)
             return message.channel.send("No alerts to display");
           const reacts = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
@@ -150,7 +177,7 @@ client.on("message", (message) => {
               const collector = msg.createReactionCollector(filter, { time: 120000 });
 
               collector.on('collect', (reaction, reactionCollector) => {
-                msg.edit(alertToString(alerts[reacts.indexOf(reaction.emoji.name)]));
+                msg.edit(alertToEmbed(alerts[reacts.indexOf(reaction.emoji.name)]));
                 reaction.remove(author);
               });
           }
@@ -180,7 +207,7 @@ client.on("message", (message) => {
           }
           autoChannels.push(channel.id);
 
-          var file = fs.createWriteStream('Discord_Bots/VIU_Status_Bot/channels.txt');
+          var file = fs.createWriteStream('./channels.txt');
           file.on('error', function(err) { console.log(err); });
           autoChannels.forEach(value => file.write(value + ', '));
           file.end();
@@ -209,7 +236,7 @@ client.on("message", (message) => {
             }
             autoChannels.remove(channel.id);
 
-            var file = fs.createWriteStream('Discord_Bots/VIU_Status_Bot/channels.txt');
+            var file = fs.createWriteStream('./channels.txt');
             file.on('error', function(err) { console.log(err); });
             autoChannels.forEach(value => file.write(value + ', '));
             file.end();
