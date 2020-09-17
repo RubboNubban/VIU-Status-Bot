@@ -73,9 +73,9 @@ function compareLastMessage(a)
     if (err) {
         console.log(err);
     } else {
-      newestAlert = JSON.parse(data); //now is an object
+      var savedAlert = JSON.parse(data); //now is an object
     }
-    if (newestAlert.Description == a.Description && newestAlert.DateTimeString == a.DateTimeString) {
+    if (a === undefined || (savedAlert.Description == a.Description && savedAlert.DateTimeString == a.DateTimeString)) {
       return false;
     }
     return true;
@@ -108,13 +108,12 @@ function getChannels() {
 getChannels();
 function updateLatestAlert()
 {
-  if(newestAlert === undefined || compareLastMessage(newestAlert))  {
+  newestAlert = alerts[0];
+  if(compareLastMessage(newestAlert))  {
     autoChannels.forEach(channel => {
-      //client.channels.get(channel).send(alertToEmbed(newestAlert));
-      newestAlert = alerts[0];
-      console.log("Alert");
-      saveLastMessage(newestAlert);
+      client.channels.get(channel).send(alertToEmbed(newestAlert));
     });
+    saveLastMessage(newestAlert);
   }
 }
 function autoAnnouncement()
