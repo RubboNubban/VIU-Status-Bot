@@ -60,7 +60,7 @@ function getData() {
 function saveLastMessage(a)
 {
   var aString = JSON.stringify(a);
-  fs.writeFileSync('lastMessage.json', aString, 'utf8', function (err) {
+  fs.writeFileSync(__dirname + '/lastMessage.json', aString, 'utf8', function (err) {
     if (err) console.log(err);
   });
 };
@@ -69,7 +69,7 @@ function saveLastMessage(a)
 function compareLastMessage(a)
 {
   //code stolen from https://stackoverflow.com/questions/36856232/write-add-data-in-json-file-using-node-js
-  fs.readFileSync('lastMessage.json', 'utf-8', function(err, data) {
+  fs.readFileSync(__dirname + '/lastMessage.json', 'utf-8', function(err, data) {
     if (err) {
         console.log(err);
     } else {
@@ -86,18 +86,24 @@ function compareLastMessage(a)
 function alertToEmbed(a)
 {
   var description = a.Description;
+  var footer = '';
+  if (description.length > 2048) {
+    footer = description.slice(2048);
+    description = description.slice(0, 2048);
+  }
   const embed = new Discord.RichEmbed()
       .setTitle(a.Title)
       .setAuthor(a.DateTimeString)
       .setColor(a.BackgroundColor)
-      .setDescription(description.length <= 2048 ? a.Description : description.substring(0, 2028 - a.DateTimeString.length - a.Title.length));
+      .setDescription(description)
+      .setFooter(footer);
   return embed;
 }
 
 var autoChannels = [];
 
 function getChannels() {
-  fs.readFile('./channels.txt', 'utf8', (err, data) => {
+  fs.readFile(__dirname + '/channels.txt', 'utf8', (err, data) => {
     if (err)
       return console.log(err);
 
@@ -206,7 +212,7 @@ client.on("message", (message) => {
           }
           autoChannels.push(channel.id);
 
-          var file = fs.createWriteStream('./channels.txt');
+          var file = fs.createWriteStream(__dirname + '/channels.txt');
           file.on('error', function(err) { console.log(err); });
           autoChannels.forEach(value => file.write(value + ', '));
           file.end();
@@ -235,7 +241,7 @@ client.on("message", (message) => {
             }
             autoChannels.remove(channel.id);
 
-            var file = fs.createWriteStream('./channels.txt');
+            var file = fs.createWriteStream(__dirname + '/channels.txt');
             file.on('error', function(err) { console.log(err); });
             autoChannels.forEach(value => file.write(value + ', '));
             file.end();
