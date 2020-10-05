@@ -69,18 +69,12 @@ function saveLastMessage(a)
 function compareLastMessage(a)
 {
   //code stolen from https://stackoverflow.com/questions/36856232/write-add-data-in-json-file-using-node-js
-  fs.readFileSync(__dirname + '/lastMessage.json', 'utf-8', function(err, data) {
-    if (err) {
-        console.log(err);
-    } else {
-      var savedAlert = JSON.parse(data); //now is an object
-    }
-    if (a === undefined || (savedAlert.Description == a.Description && savedAlert.DateTimeString == a.DateTimeString)) {
-      return false;
-    }
-    return true;
-  });
-};
+  const savedAlert = JSON.parse(fs.readFileSync(__dirname + '/lastMessage.json', 'utf-8'));
+  if (a === undefined || savedAlert === undefined || (savedAlert.Description == a.Description && savedAlert.DateTimeString == a.DateTimeString)) {
+    return false;
+  }
+  return true;
+}
 
 //Converts an alert into an embed that's ready to send in discord
 function alertToEmbed(a)
@@ -122,17 +116,12 @@ function updateLatestAlert()
     saveLastMessage(newestAlert);
   }
 }
-function autoAnnouncement()
-{
-  getData();
-  updateLatestAlert();
-}
 
 var globalTimer;
 client.on('ready', () => {
   console.log('Online and running');
   getData();
-  globalTimer = setInterval(autoAnnouncement, 60000);
+  globalTimer = setInterval(getData, 60000);
 });
 
 //code stolen from https://stackoverflow.com/questions/3954438/how-to-remove-item-from-array-by-value
