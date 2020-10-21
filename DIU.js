@@ -66,6 +66,7 @@ function saveLastMessage(a)
 };
 
 //compare last saved alert with alert to be sent
+//return true if savedAlert is different from alert to be sent
 function compareLastMessage(a)
 {
   //code stolen from https://stackoverflow.com/questions/36856232/write-add-data-in-json-file-using-node-js
@@ -101,7 +102,7 @@ function getChannels() {
     if (err)
       return console.log(err);
 
-    autoChannels = data.slice(0, -2).split(', ');
+    autoChannels = data.trim().slice(0, -1).split(', ');
   });
 }
 
